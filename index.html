@@ -1,0 +1,193 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Форма</title>	
+	<style>
+
+		fieldset {
+			padding: 20px;
+		}
+
+		fieldset > div {
+			margin-bottom: 20px;
+		}
+
+		label {
+			display: inline-block;
+			width: 156px;
+		}
+
+		label.error {
+			color: #f75252;
+			margin-left: 15px;
+			width: auto;
+		}
+
+		input, textarea {
+			border: 1px solid #ddd;
+		}
+
+		input.error {
+			border-color: #faa3a3;
+		}
+		
+		input.error:focus {
+			outline-color: #faa3a3;
+		}
+
+	</style>
+</head>
+<body>
+<form id="form">
+	<fieldset>
+		<legend>Заполните, пожалуйста, все поля</legend>
+		<div>
+			<label for="name">Имя</label>
+			<input id="name" name="name" type="text" required>
+		</div>
+		<div>
+			<label for="phone">Телефон</label>
+			<input id="phone" type="phone" name="phone" required>
+		</div>
+		<div>
+			<label for="email">E-Mail</label>
+			<input id="email" type="email" name="email" required>
+		</div>
+		<div>
+			<label for="service1">
+				<input type="radio" id="service1" value="service1" name="service" required="" aria-required="true" checked>Услуга 1
+			</label>
+			<label for="service2">
+				<input type="radio" id="service2" value="service2" name="service" required="" aria-required="true">Услуга 2
+			</label>
+		</div>
+		<div>
+			<label for="file">Загрузите документ</label>
+			<input type="file" id="file" name="file" class="required" aria-required="true">
+			<!--
+			для множественного выбора файлов
+			<input type="file" id="file" name="file[]" class="required" aria-required="true" size="20" multiple="">
+			-->
+		</div>
+		<div>
+			<label for="agree">Согласен с условиями</label>
+			<input type="checkbox" class="checkbox" id="agree" name="agree" required>
+		</div>
+
+		<div>
+			<label for="comment">Сообщение</label>
+			<textarea id="comment" name="comment" required></textarea>
+		</div>
+		<div>
+			<button>Отправить</button>
+			<div class="msg"></div>
+		</div>
+	</fieldset>
+</form>
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="js/jquery.validate.min.js"></script>
+<script src="js/jquery.maskedinput.min.js"></script>
+<script>
+
+	// задать пусть к скрипту
+	var scriptPath = '/test/send_data.php';
+
+	$(document).ready(function() {
+
+		
+		$("#form").validate({
+			rules: {
+				//обязательные поля - name: "required",
+				name: "required",
+				email: {
+					required: true,
+					email: true
+				},
+				file: "required",
+				agree: "required"
+			},
+			messages: {
+				// сообщения о некорректных полях
+				name: "Введите Ваше имя",
+				phone: "Введите Ваш телефон",
+				email: "Введите Ваш e-mail",
+				file: "Загрузите файл",
+				agree: "Согласитесь с условиями, чтоб продолжить",
+				comment: "Введите сообщение"
+			}
+		});
+		
+		$("#phone").mask("9(999)999-99-99"); 
+	});
+	
+	function showMsg(msg, success) {
+		if (success) {
+			successMsg(msg);
+		} else {
+			errorMsg(msg);
+		}
+	}
+	
+	function errorMsg(msg) {
+		$('.msg').addClass('error_msg');
+		$('.msg').removeClass('success_msg');
+		$('.msg').html(msg);
+	}
+	
+	function successMsg(msg) {
+		$('.msg').addClass('success_msg');
+		$('.msg').removeClass('error_msg');
+		$('.msg').html(msg);
+	}
+	
+	$("#form").submit(function() {
+		if (!$("#form").valid()) return false;
+		
+		successMsg('');
+		
+		event.preventDefault();
+		var formData = new FormData();
+
+		$.each($("#file")[0].files, function(i, file){
+			formData.append('file-'+i, file);
+		});
+
+		var dataArray = $('#form').serializeArray();
+		for (var key in dataArray) { 
+			var val = dataArray[key];
+			formData.append(val.name, val.value);
+		} 
+		
+		$.ajax({
+				url: scriptPath,
+				type: 'POST',
+				contentType: false,
+				processData: false,
+				cache: false,
+				headers: { 'cache-control': 'no-cache' },
+				dataType: 'json',
+				data: formData, 
+				timeout: 7000, 
+
+				success: function( data )
+				{ 
+					success = data['success'];
+					msg = data['msg'];
+					showMsg(msg, success);
+					
+					if (!success) return false;
+					
+					for (var key in dataArray) { 
+						var val = dataArray[key];
+						$('input[name='+val.name+']').val(''); 
+					} 
+				},
+		});
+
+		return false;
+	});
+	</script>
+</body>
+</html>
