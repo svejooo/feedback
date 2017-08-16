@@ -15,4 +15,4 @@
 3 Принимаем данные и иправляем чеерз библиотеку PHP Mailer
 
 Добавляем Скрытый емэйл 
-$mail->AddBCC('php@rekhod.ru');
+$mail->AddBCC('php@site.ru');
